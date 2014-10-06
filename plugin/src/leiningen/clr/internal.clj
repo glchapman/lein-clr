@@ -111,17 +111,10 @@
 
 (defn run-process
   ([^ProcessBuilder process-builder pipe-input?]
-    (let [^Process process (.start process-builder)
-          quit? (atom false)
-          e (futurex (pipe-output quit? (.getErrorStream process) *err*))
-          o (futurex (pipe-output quit? (.getInputStream process) *out*))
-          i (when pipe-input?
-              (futurex (pipe-input quit? (.getOutputStream process) System/in)))]
+    (.inheritIO process-builder)
+    (let [^Process process (.start process-builder)]
       (let [exit (.waitFor process)]
-        (reset! quit? true)
-        (when i @i)
         (when (pos? exit)
-          @e @o
           (lm/abort exit)))))
   ([^ProcessBuilder process-builder]
     (run-process process-builder false)))
